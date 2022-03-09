@@ -1,7 +1,7 @@
 # before building it, run build.sh
 
 CXX := clang++
-CXXFLAGS := -fPIC -I./deps/riscv-isa-sim/riscv  -I./deps/riscv-isa-sim/build -I./deps/riscv-isa-sim/softfloat
+CXXFLAGS := -fPIC -I./deps/riscv-isa-sim/riscv  -I./deps/riscv-isa-sim/build -I./deps/riscv-isa-sim/softfloat -I./deps/riscv-isa-sim/fesvr
 LDFLAGS := -L'./deps/riscv-isa-sim/build' -lriscv -lsoftfloat -ldisasm -ldl
 
 all: target/libspike-interfaces.a

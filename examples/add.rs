@@ -1,7 +1,7 @@
 use spike_sys::*;
 
 pub fn main() {
-    let proc = unsafe { rvv_new_processor() };
+    let proc = unsafe { rvv_new_processor(128, 64, 0) };
     let vlen = unsafe { rvv_get_vlen(proc) };
     let elen = unsafe { rvv_get_elen(proc) };
     println!("vlen = {}, elen = {}", vlen, elen);

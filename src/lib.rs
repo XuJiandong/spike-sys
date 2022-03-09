@@ -1,6 +1,6 @@
 #[link(name = "spike-interfaces", kind = "static")]
 extern "C" {
-    pub fn rvv_new_processor() -> u64;
+    pub fn rvv_new_processor(vlen: u32, elen: u32, mem_size: u64) -> u64;
     pub fn rvv_execute(processor: u64, instruction: u64) -> i32;
     /**
      *  offset: the offset in register file in bytes
@@ -19,5 +19,8 @@ extern "C" {
     pub fn rvv_get_vtype(processor: u64) -> u64;
     pub fn rvv_get_lmul(processor: u64) -> u64;
     pub fn rvv_get_vill(processor: u64) -> u64;
+    pub fn rvv_load_mem(processor: u64, addr: u64, len: u64, bytes: *const u8) -> i32;
+    pub fn rvv_store_mem(processor: u64, addr: u64, len: u64, bytes: *const u8) -> i32;
+
     pub fn rvv_delete_processor(processor: u64);
 }
