@@ -23,4 +23,6 @@ cargo build
 * Run example (Optional)
 ```bash
 cargo run --example=add
+cargo run --example=mem
+cargo run --example=load_store
 ```

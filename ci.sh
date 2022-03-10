@@ -7,6 +7,7 @@ bash build.sh
 
 make
 cargo build
-cargo run --example=add
-cargo run --example=mem
 
+for example in examples/*.rs; do
+    cargo run --example `basename $example .rs`
+done
