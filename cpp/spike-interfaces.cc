@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string>
 
+#include "disasm.h"
 #include "mmu.h"
 #include "processor.h"
 #include "simif.h"
@@ -182,3 +183,20 @@ int rvv_store_mem(uint64_t processor, uint64_t addr, uint64_t len, uint8_t *byte
         return -3;
     }
 }
+
+uint64_t rvv_new_disassembler(uint32_t xlen) {
+    disassembler_t *dis = new disassembler_t(xlen);
+    return (uint64_t)dis;
+}
+
+int rvv_disassemble(uint64_t dis, uint64_t inst, char *output, uint32_t output_len) {
+    disassembler_t *disassembler = (disassembler_t *)dis;
+    std::string str = disassembler->disassemble((insn_t)inst);
+    if (str.length() > (output_len - 1)) {
+        return -4;
+    }
+    strncpy(output, str.c_str(), str.length() + 1);
+    return 0;
+}
+
+void rvv_delete_disassembler(uint64_t dis) { delete (disassembler_t *)dis; }
