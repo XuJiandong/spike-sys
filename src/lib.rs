@@ -23,4 +23,8 @@ extern "C" {
     pub fn rvv_store_mem(processor: u64, addr: u64, len: u64, bytes: *const u8) -> i32;
 
     pub fn rvv_delete_processor(processor: u64);
+
+    pub fn rvv_new_disassembler(xlen: u32) -> u64;
+    pub fn rvv_disassemble(dis: u64, inst: u64, output: *mut u8, output_len: u32) -> i32;
+    pub fn rvv_delete_disassembler(dis: u64);
 }
