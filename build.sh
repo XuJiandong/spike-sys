@@ -7,5 +7,5 @@ sed -i 's/private:/public:/g' deps/riscv-isa-sim/riscv/mmu.h
 mkdir -p deps/riscv-isa-sim/build
 cd deps/riscv-isa-sim/build
 ../configure CXX=clang++ CC=clang CFLAGS="-g -O1" CXXFLAGS="-g -O1"
-make -j ${JOBS:4}
+make
 cd -

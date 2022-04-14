@@ -1,0 +1,34 @@
+[package]
+name = "spike-sys-fuzz"
+version = "0.0.0"
+authors = ["Automatically generated"]
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+rvv-encode = { git = "https://github.com/cryptape/rvv-encoder" }
+# ckb-vm = { git = "https://github.com/mohanson/ckb-vm", branch = "rvv_128" }
+ckb-vm = { path = "/home/ubuntu/src/ckb-vm" }
+
+[dependencies.spike-sys]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "fuzz_target_1"
+path = "fuzz_targets/fuzz_target_1.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_target_2"
+path = "fuzz_targets/fuzz_target_2.rs"
+test = false
+doc = false
