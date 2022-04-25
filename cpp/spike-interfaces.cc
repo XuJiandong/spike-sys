@@ -154,7 +154,11 @@ uint64_t rvv_get_vill(uint64_t processor) {
     return proc->VU.vill;
 }
 
-void rvv_delete_processor(uint64_t h) { delete (processor_t *)h; }
+void rvv_delete_processor(uint64_t h) { 
+    processor_t* p = (processor_t*)h;
+    delete static_cast<memory*>(p->sim);
+    delete p;
+}
 
 int rvv_load_mem(uint64_t processor, uint64_t addr, uint64_t len, uint8_t *bytes) {
     processor_t *proc = (processor_t *)processor;
