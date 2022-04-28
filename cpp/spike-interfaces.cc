@@ -145,7 +145,7 @@ uint64_t rvv_get_vtype(uint64_t processor) {
     return proc->VU.vtype->read();
 }
 
-uint64_t rvv_get_lmul(uint64_t processor) {
+float rvv_get_lmul(uint64_t processor) {
     processor_t *proc = (processor_t *)processor;
     return proc->VU.vflmul;
 }
@@ -155,7 +155,7 @@ uint64_t rvv_get_vill(uint64_t processor) {
     return proc->VU.vill;
 }
 
-void rvv_delete_processor(uint64_t h) { 
+void rvv_delete_processor(uint64_t h) {
     processor_t* p = (processor_t*)h;
     delete static_cast<memory*>(p->sim);
     delete p;

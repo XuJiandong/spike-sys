@@ -6,5 +6,4 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rvv-encode = { git = "https://github.com/cryptape/rvv-encoder" }
 ckb-vm = { git = "https://github.com/nervosnetwork/ckb-vm", branch = "rvv" }

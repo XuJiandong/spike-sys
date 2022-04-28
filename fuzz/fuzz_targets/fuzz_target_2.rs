@@ -19,14 +19,6 @@ impl Rand {
         r
     }
 
-    // fn u16(&mut self) -> u16 {
-    //     let mut b = [0; 2];
-    //     b.copy_from_slice(&self.n[self.i..self.i + 2]);
-    //     let r = u16::from_le_bytes(b);
-    //     self.i += 2;
-    //     r
-    // }
-
     fn u32(&mut self) -> u32 {
         let mut b = [0; 4];
         b.copy_from_slice(&self.n[self.i..self.i + 4]);
@@ -52,7 +44,7 @@ impl Rand {
 
 fn fuzz_unit_stride(data: [u8; 2048]) {
     let mut rand = Rand::new(data.clone());
-    let spike = unsafe { rvv_new_processor(128, 64, 4096) };
+    let spike = Spike::new(128, 64, 4096);
     let mut ckbvm =
         ckb_vm::DefaultMachineBuilder::new(ckb_vm::DefaultCoreMachine::<u64, ckb_vm::SparseMemory<u64>>::new(
             ckb_vm::ISA_IMC | ckb_vm::ISA_B | ckb_vm::ISA_V,
@@ -76,34 +68,30 @@ fn fuzz_unit_stride(data: [u8; 2048]) {
     insn |= insn_immediate_u << 15;
     insn |= insn_sew << 23;
     insn |= insn_lmul << 20;
-    let err = unsafe { rvv_execute(spike, insn as u64) };
-    assert_eq!(err, 0);
+    spike.execute(insn as u64).unwrap();
     let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
     ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
-    assert_eq!(unsafe { rvv_get_vill(spike) }, 0);
+    assert_eq!(spike.get_vill(), 0);
     assert_eq!(ckbvm.vill(), false);
-    let spike_sew = unsafe { rvv_get_sew(spike) };
+    let spike_sew = spike.get_sew();
     let ckbvm_sew = ckbvm.vsew();
     assert_eq!(spike_sew, ckbvm_sew);
-    let spike_vl = unsafe { rvv_get_vl(spike) };
+    let spike_vl = spike.get_vl();
     let ckbvm_vl = ckbvm.vl();
     assert_eq!(spike_vl, ckbvm_vl);
 
     // Set memory
-    let err = unsafe { rvv_store_mem(spike, 4096, 1024, data.as_ptr() as *const u8) };
-    assert_eq!(err, 0);
+    spike.store_mem(4096, 1024, data.as_ptr() as *const u8).unwrap();
     ckbvm.memory_mut().store_bytes(4096, &data[..]).unwrap();
     // Set v register
     for i in 0..32 {
         let buf = rand.data(16);
-        let err = unsafe { rvv_set_vreg(spike, 16 * i, buf.as_ptr() as *const u8, 16) };
-        assert_eq!(err, 0);
+        spike.set_vreg(16 * i, buf.as_ptr() as *const u8, 16).unwrap();
         ckbvm.element_mut(i as usize, 128, 0).copy_from_slice(buf);
     }
     // Set x register
     for i in 1..32 {
-        let err = unsafe { rvv_set_xreg(spike, i, 4096) };
-        assert_eq!(err, 0);
+        spike.set_xreg(i, 4096).unwrap();
         ckbvm.set_register(i as usize, 4096);
     }
 
@@ -136,32 +124,25 @@ fn fuzz_unit_stride(data: [u8; 2048]) {
                 insn
             );
         }
-        let err = unsafe { rvv_execute(spike, insn as u64) };
+        let err = spike.execute(insn as u64);
         let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
         let r = ckb_vm::instructions::execute_instruction(insn, &mut ckbvm);
-        if err != 0 {
-            assert!(r.is_err());
-        } else {
-            assert!(r.is_ok());
-        }
+        assert_eq!(err.is_ok(), r.is_ok());
     }
 
     // Check result
     let mut spike_vd = [0x00; 16];
     let mut ckbvm_vd = [0x00; 16];
     for i in 0..32 {
-        let err = unsafe { rvv_get_vreg(spike, 16 * i, (&mut spike_vd).as_mut_ptr() as *mut u8, 16) };
-        assert_eq!(err, 0);
+        spike.get_vreg(16 * i, (&mut spike_vd).as_mut_ptr() as *mut u8, 16).unwrap();
         ckbvm_vd.copy_from_slice(ckbvm.element_ref(i as usize, 128, 0));
         assert_eq!(spike_vd, ckbvm_vd);
     }
-
-    unsafe { rvv_delete_processor(spike) };
 }
 
 fn fuzz_stride(data: [u8; 2048]) {
     let mut rand = Rand::new(data.clone());
-    let spike = unsafe { rvv_new_processor(128, 64, 4096) };
+    let spike = Spike::new(128, 64, 4096);
     let mut ckbvm =
         ckb_vm::DefaultMachineBuilder::new(ckb_vm::DefaultCoreMachine::<u64, ckb_vm::SparseMemory<u64>>::new(
             ckb_vm::ISA_IMC | ckb_vm::ISA_B | ckb_vm::ISA_V,
@@ -185,37 +166,32 @@ fn fuzz_stride(data: [u8; 2048]) {
     insn |= insn_immediate_u << 15;
     insn |= insn_sew << 23;
     insn |= insn_lmul << 20;
-    let err = unsafe { rvv_execute(spike, insn as u64) };
-    assert_eq!(err, 0);
+    spike.execute(insn as u64).unwrap();
     let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
     ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
-    assert_eq!(unsafe { rvv_get_vill(spike) }, 0);
+    assert_eq!(spike.get_vill(), 0);
     assert_eq!(ckbvm.vill(), false);
-    let spike_sew = unsafe { rvv_get_sew(spike) };
+    let spike_sew = spike.get_sew();
     let ckbvm_sew = ckbvm.vsew();
     assert_eq!(spike_sew, ckbvm_sew);
-    let spike_vl = unsafe { rvv_get_vl(spike) };
+    let spike_vl = spike.get_vl();
     let ckbvm_vl = ckbvm.vl();
     assert_eq!(spike_vl, ckbvm_vl);
 
     // Set memory
-    let err = unsafe { rvv_store_mem(spike, 4096, 1024, data.as_ptr() as *const u8) };
-    assert_eq!(err, 0);
+    spike.store_mem(4096, 1024, data.as_ptr() as *const u8).unwrap();
     ckbvm.memory_mut().store_bytes(4096, &data[..]).unwrap();
     // Set v register
     for i in 0..32 {
         let buf = rand.data(16);
-        let err = unsafe { rvv_set_vreg(spike, 16 * i, buf.as_ptr() as *const u8, 16) };
-        assert_eq!(err, 0);
+        spike.set_vreg(16 * i, buf.as_ptr() as *const u8, 16).unwrap();
         ckbvm.element_mut(i as usize, 128, 0).copy_from_slice(buf);
     }
     // Set x register
-    let err = unsafe { rvv_set_xreg(spike, 1, 4096 + 512) };
-    assert_eq!(err, 0);
+    spike.set_xreg(1, 4096 + 512).unwrap();
     ckbvm.set_register(1, 4096 + 512);
     let rs2 = rand.u64() % 5 - 2;
-    let err = unsafe { rvv_set_xreg(spike, 2, rs2) };
-    assert_eq!(err, 0);
+    spike.set_xreg(2, rs2).unwrap();
     ckbvm.set_register(2, rs2);
 
     for _ in 0..128 {
@@ -245,32 +221,25 @@ fn fuzz_stride(data: [u8; 2048]) {
                 insn
             );
         }
-        let err = unsafe { rvv_execute(spike, insn as u64) };
+        let err = spike.execute(insn as u64);
         let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
         let r = ckb_vm::instructions::execute_instruction(insn, &mut ckbvm);
-        if err != 0 {
-            assert!(r.is_err());
-        } else {
-            assert!(r.is_ok());
-        }
+        assert_eq!(err.is_ok(), r.is_ok());
     }
 
     // Check result
     let mut spike_vd = [0x00; 16];
     let mut ckbvm_vd = [0x00; 16];
     for i in 0..32 {
-        let err = unsafe { rvv_get_vreg(spike, 16 * i, (&mut spike_vd).as_mut_ptr() as *mut u8, 16) };
-        assert_eq!(err, 0);
+        spike.get_vreg(16 * i, (&mut spike_vd).as_mut_ptr() as *mut u8, 16).unwrap();
         ckbvm_vd.copy_from_slice(ckbvm.element_ref(i as usize, 128, 0));
         assert_eq!(spike_vd, ckbvm_vd);
     }
-
-    unsafe { rvv_delete_processor(spike) };
 }
 
 fn fuzz_indexed(data: [u8; 2048]) {
     let mut rand = Rand::new(data.clone());
-    let spike = unsafe { rvv_new_processor(128, 64, 4096) };
+    let spike = Spike::new(128, 64, 4096);
     let mut ckbvm =
         ckb_vm::DefaultMachineBuilder::new(ckb_vm::DefaultCoreMachine::<u64, ckb_vm::SparseMemory<u64>>::new(
             ckb_vm::ISA_IMC | ckb_vm::ISA_B | ckb_vm::ISA_V,
@@ -294,23 +263,21 @@ fn fuzz_indexed(data: [u8; 2048]) {
     insn |= insn_immediate_u << 15;
     insn |= insn_sew << 23;
     insn |= insn_lmul << 20;
-    let err = unsafe { rvv_execute(spike, insn as u64) };
-    assert_eq!(err, 0);
+    spike.execute(insn as u64).unwrap();
     let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
     ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
-    assert_eq!(unsafe { rvv_get_vill(spike) }, 0);
+    assert_eq!(spike.get_vill(), 0);
     assert_eq!(ckbvm.vill(), false);
-    let spike_sew = unsafe { rvv_get_sew(spike) };
+    let spike_sew = spike.get_sew();
     let ckbvm_sew = ckbvm.vsew();
     assert_eq!(spike_sew, ckbvm_sew);
-    let spike_vl = unsafe { rvv_get_vl(spike) };
+    let spike_vl = spike.get_vl();
     let ckbvm_vl = ckbvm.vl();
     assert_eq!(spike_vl, ckbvm_vl);
     let ckbvm_vl_max = ckbvm.vlmax();
 
     // Set memory
-    let err = unsafe { rvv_store_mem(spike, 4096, 1024, data.as_ptr() as *const u8) };
-    assert_eq!(err, 0);
+    spike.store_mem(4096, 1024, data.as_ptr() as *const u8).unwrap();
     ckbvm.memory_mut().store_bytes(4096, &data[..]).unwrap();
 
     // Set v register
@@ -318,15 +285,13 @@ fn fuzz_indexed(data: [u8; 2048]) {
         let sew = 1 << (insn_sew + 3);
         let index = rand.u64() % ckbvm_vl_max;
 
-        let err = unsafe { rvv_set_vreg(spike, 32, (&index) as *const u64 as *const u8, sew / 8) };
-        assert_eq!(err, 0);
+        spike.set_vreg(32, (&index) as *const u64 as *const u8, sew / 8).unwrap();
         let buf = unsafe { std::slice::from_raw_parts((&index) as *const u64 as *const u8, sew as usize / 8) };
         ckbvm.element_mut(2, sew, i as usize).copy_from_slice(buf);
     }
 
     // Set x register
-    let err = unsafe { rvv_set_xreg(spike, 1, 4096) };
-    assert_eq!(err, 0);
+    spike.set_xreg(1, 4096).unwrap();
     ckbvm.set_register(1, 4096);
 
     for _ in 0..128 {
@@ -364,27 +329,20 @@ fn fuzz_indexed(data: [u8; 2048]) {
                 insn
             );
         }
-        let err = unsafe { rvv_execute(spike, insn as u64) };
+        let err = spike.execute(insn as u64);
         let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
         let r = ckb_vm::instructions::execute_instruction(insn, &mut ckbvm);
-        if err != 0 {
-            assert!(r.is_err());
-        } else {
-            assert!(r.is_ok());
-        }
+        assert_eq!(err.is_ok(), r.is_ok());
     }
 
     // Check result
     let mut spike_vd = [0x00; 16];
     let mut ckbvm_vd = [0x00; 16];
     for i in 0..32 {
-        let err = unsafe { rvv_get_vreg(spike, 16 * i, (&mut spike_vd).as_mut_ptr() as *mut u8, 16) };
-        assert_eq!(err, 0);
+        spike.get_vreg(16 * i, (&mut spike_vd).as_mut_ptr() as *mut u8, 16).unwrap();
         ckbvm_vd.copy_from_slice(ckbvm.element_ref(i as usize, 128, 0));
         assert_eq!(spike_vd, ckbvm_vd);
     }
-
-    unsafe { rvv_delete_processor(spike) };
 }
 
 fuzz_target!(|data: [u8; 2048]| {
