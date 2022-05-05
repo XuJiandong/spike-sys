@@ -345,8 +345,13 @@ fn fuzz_indexed(data: [u8; 2048]) {
     }
 }
 
-fuzz_target!(|data: [u8; 2048]| {
-    fuzz_unit_stride(data.clone());
-    fuzz_stride(data.clone());
-    fuzz_indexed(data.clone());
+fuzz_target!(|data: [u8; 512]| {
+    let mut rand_data = [0u8; 2048];
+    rand_data[0x000..0x200].copy_from_slice(&data);
+    rand_data[0x200..0x400].copy_from_slice(&data);
+    rand_data[0x400..0x600].copy_from_slice(&data);
+    rand_data[0x600..0x800].copy_from_slice(&data);
+    fuzz_unit_stride(rand_data.clone());
+    fuzz_stride(rand_data.clone());
+    fuzz_indexed(rand_data.clone());
 });

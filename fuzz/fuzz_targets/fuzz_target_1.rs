@@ -4,12 +4,12 @@ use libfuzzer_sys::fuzz_target;
 use spike_sys::*;
 
 struct Rand {
-    n: [u8; 1024],
+    n: [u8; 2048],
     i: usize,
 }
 
 impl Rand {
-    fn new(n: [u8; 1024]) -> Self {
+    fn new(n: [u8; 2048]) -> Self {
         Self { n, i: 0 }
     }
 
@@ -50,8 +50,14 @@ impl Rand {
     }
 }
 
-fuzz_target!(|data: [u8; 1024]| {
-    let mut rand = Rand::new(data);
+fuzz_target!(|data: [u8; 512]| {
+    let mut rand_data = [0u8; 2048];
+    rand_data[0x000..0x200].copy_from_slice(&data);
+    rand_data[0x200..0x400].copy_from_slice(&data);
+    rand_data[0x400..0x600].copy_from_slice(&data);
+    rand_data[0x600..0x800].copy_from_slice(&data);
+
+    let mut rand = Rand::new(rand_data);
     let spike = Spike::new(128, 64, 0);
     let mut ckbvm =
         ckb_vm::DefaultMachineBuilder::new(ckb_vm::DefaultCoreMachine::<u64, ckb_vm::SparseMemory<u64>>::new(
@@ -62,23 +68,71 @@ fuzz_target!(|data: [u8; 1024]| {
         .build();
 
     // Set vtype
-    let mut insn: u32 = 0b11_0000000000_00000_111_00101_1010111;
-    let insn_sew = rand.u8() as u32 & 0b11;
-    let insn_immediate_u = rand.u8() as u32 % (128 / (1 << (insn_sew + 3)) + 1);
-    let insn_lmul_mod = match 1 << (insn_sew + 3) {
-        64 => 4,
-        32 => 5,
-        16 => 6,
-        _ => 7,
-    };
-    let insn_lmul_array: [u32; 7] = [0b000, 0b001, 0b010, 0b011, 0b111, 0b110, 0b101]; // [1 2 4 8 0.5 0.25 0.125]
-    let insn_lmul: u32 = insn_lmul_array[rand.u8() as usize % insn_lmul_mod];
-    insn |= insn_immediate_u << 15;
-    insn |= insn_sew << 23;
-    insn |= insn_lmul << 20;
-    spike.execute(insn as u64).unwrap();
-    let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
-    ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
+    match rand.u8() % 3 {
+        // vsetivli
+        0 => {
+            let mut insn: u32 = 0b11_0000000000_00000_111_00101_1010111;
+            let insn_sew = rand.u8() as u32 & 0b11;
+            let insn_immediate_u = rand.u8() as u32 % (128 / (1 << (insn_sew + 3)) + 1);
+            let insn_lmul_mod = match 1 << (insn_sew + 3) {
+                64 => 4,
+                32 => 5,
+                16 => 6,
+                _ => 7,
+            };
+            let insn_lmul_array: [u32; 7] = [0b000, 0b001, 0b010, 0b011, 0b111, 0b110, 0b101]; // [1 2 4 8 0.5 0.25 0.125]
+            let insn_lmul: u32 = insn_lmul_array[rand.u8() as usize % insn_lmul_mod];
+            insn |= insn_immediate_u << 15;
+            insn |= insn_sew << 23;
+            insn |= insn_lmul << 20;
+            spike.execute(insn as u64).unwrap();
+            let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
+            ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
+        }
+        // vsetvli
+        1 => {
+            let mut insn: u32 = 0b0_00000000000_00100_111_00101_1010111;
+            let insn_sew = rand.u8() as u32 & 0b11;
+            let insn_immediate_u = rand.u8() as u32 % (128 / (1 << (insn_sew + 3)) + 1);
+            let insn_lmul_mod = match 1 << (insn_sew + 3) {
+                64 => 4,
+                32 => 5,
+                16 => 6,
+                _ => 7,
+            };
+            let insn_lmul_array: [u32; 7] = [0b000, 0b001, 0b010, 0b011, 0b111, 0b110, 0b101]; // [1 2 4 8 0.5 0.25 0.125]
+            let insn_lmul: u32 = insn_lmul_array[rand.u8() as usize % insn_lmul_mod];
+            spike.set_xreg(4, insn_immediate_u as u64).unwrap();
+            ckbvm.set_register(4, insn_immediate_u as u64);
+            insn |= insn_sew << 23;
+            insn |= insn_lmul << 20;
+            spike.execute(insn as u64).unwrap();
+            let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
+            ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
+        }
+        // vsetvl
+        2 => {
+            let insn: u32 = 0b1000000_00011_00100_111_00101_1010111;
+            let insn_sew = rand.u8() as u32 & 0b11;
+            let insn_immediate_u = rand.u8() as u32 % (128 / (1 << (insn_sew + 3)) + 1);
+            let insn_lmul_mod = match 1 << (insn_sew + 3) {
+                64 => 4,
+                32 => 5,
+                16 => 6,
+                _ => 7,
+            };
+            let insn_lmul_array: [u32; 7] = [0b000, 0b001, 0b010, 0b011, 0b111, 0b110, 0b101]; // [1 2 4 8 0.5 0.25 0.125]
+            let insn_lmul: u32 = insn_lmul_array[rand.u8() as usize % insn_lmul_mod];
+            spike.set_xreg(4, insn_immediate_u as u64).unwrap();
+            ckbvm.set_register(4, insn_immediate_u as u64);
+            spike.set_xreg(3, (insn_sew << 3 | insn_lmul) as u64).unwrap();
+            ckbvm.set_register(3, (insn_sew << 3 | insn_lmul) as u64);
+            spike.execute(insn as u64).unwrap();
+            let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
+            ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
+        }
+        _ => unreachable!(),
+    }
     assert_eq!(spike.get_vill(), 0);
     assert_eq!(ckbvm.vill(), false);
     let spike_sew = spike.get_sew();
@@ -322,24 +376,27 @@ fuzz_target!(|data: [u8; 1024]| {
         [0b000000_0_11111_00000_000_11111_0000000, 0b100111_1_00000_00111_011_00000_1010111], // vmv8r.v
     ];
 
-    // Execute random instruction
-    let insn_choose = rand.u16() as usize % insn_list.len();
-    let mask = insn_list[insn_choose];
-    let insn = rand.u32() & mask[0] | mask[1];
-    if std::env::var("LOG").is_ok() {
-        println!(
-            "sew={:?} lmul={:?} vl={:?} insn_choose=0x{:x} insn=0x{:x}",
-            ckbvm_sew,
-            ckbvm.vlmul(),
-            ckbvm_vl,
-            insn_choose,
-            insn
-        );
+    for _ in 0..128 {
+        // Execute random instruction
+        let insn_choose = rand.u16() as usize % insn_list.len();
+        let mask = insn_list[insn_choose];
+        let insn = rand.u32() & mask[0] | mask[1];
+        if std::env::var("LOG").is_ok() {
+            println!(
+                "sew={:?} lmul={:?} vl={:?} insn_choose=0x{:x} insn=0x{:x}",
+                ckbvm_sew,
+                ckbvm.vlmul(),
+                ckbvm_vl,
+                insn_choose,
+                insn
+            );
+        }
+        let err = spike.execute(insn as u64);
+        let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
+        let r = ckb_vm::instructions::execute_instruction(insn, &mut ckbvm);
+        assert_eq!(err.is_ok(), r.is_ok());
     }
-    let err = spike.execute(insn as u64);
-    let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
-    let r = ckb_vm::instructions::execute_instruction(insn, &mut ckbvm);
-    assert_eq!(err.is_ok(), r.is_ok());
+
     // Check result
     let mut spike_vd = [0x00; 16];
     let mut ckbvm_vd = [0x00; 16];
