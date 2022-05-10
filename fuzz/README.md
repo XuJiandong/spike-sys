@@ -26,4 +26,7 @@ Generate coverage report
 ```sh
 $ cargo fuzz coverage fuzz_target_1
 $ cargo cov -- show target/x86_64-unknown-linux-gnu/release/fuzz_target_1 --Xdemangler=rustfilt --format=html -instr-profile=coverage/fuzz_target_1/coverage.profdata --name=ckb --line-coverage-gt=1> /tmp/report.html
+
+$ cargo fuzz coverage fuzz_target_2
+$ cargo cov -- show target/x86_64-unknown-linux-gnu/release/fuzz_target_2 --Xdemangler=rustfilt --format=html -instr-profile=coverage/fuzz_target_2/coverage.profdata --name=ckb --line-coverage-gt=1> /tmp/report.html
 ```

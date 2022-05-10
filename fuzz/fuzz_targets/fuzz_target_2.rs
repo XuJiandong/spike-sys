@@ -279,80 +279,82 @@ fn fuzz_indexed(data: [u8; 2048]) {
     spike.store_mem(4096, 2048, data.as_ptr() as *const u8).unwrap();
     ckbvm.memory_mut().store_bytes(4096, &data[..]).unwrap();
 
-    // Set x register
-    spike.set_xreg(1, 4096).unwrap();
-    ckbvm.set_register(1, 4096);
+    for _ in 0..8 {
+        // Set x register
+        spike.set_xreg(1, 4096).unwrap();
+        ckbvm.set_register(1, 4096);
 
-    #[rustfmt::skip]
-    let insn_list = [
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_000_00000_0000111], // vluxei8.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_101_00000_0000111], // vluxei16.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_110_00000_0000111], // vluxei32.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_111_00000_0000111], // vluxei64.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_000_00000_0000111], // vloxei8.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_101_00000_0000111], // vloxei16.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_110_00000_0000111], // vloxei32.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_111_00000_0000111], // vloxei64.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_000_00000_0100111], // vsuxei8.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_101_00000_0100111], // vsuxei16.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_110_00000_0100111], // vsuxei32.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_111_00000_0100111], // vsuxei64.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_000_00000_0100111], // vsoxei8.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_101_00000_0100111], // vsoxei16.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_110_00000_0100111], // vsoxei32.v
-        [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_111_00000_0100111], // vsoxei64.v
-    ];
+        #[rustfmt::skip]
+        let insn_list = [
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_000_00000_0000111], // vluxei8.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_101_00000_0000111], // vluxei16.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_110_00000_0000111], // vluxei32.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_111_00000_0000111], // vluxei64.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_000_00000_0000111], // vloxei8.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_101_00000_0000111], // vloxei16.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_110_00000_0000111], // vloxei32.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_111_00000_0000111], // vloxei64.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_000_00000_0100111], // vsuxei8.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_101_00000_0100111], // vsuxei16.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_110_00000_0100111], // vsuxei32.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_001_0_00010_00001_111_00000_0100111], // vsuxei64.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_000_00000_0100111], // vsoxei8.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_101_00000_0100111], // vsoxei16.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_110_00000_0100111], // vsoxei32.v
+            [0b000_000_1_00000_00000_000_11111_0000000, 0b000_011_0_00010_00001_111_00000_0100111], // vsoxei64.v
+        ];
 
-    let insn_choose = rand.u8() as usize % insn_list.len();
-    let mask = insn_list[insn_choose];
+        let insn_choose = rand.u8() as usize % insn_list.len();
+        let mask = insn_list[insn_choose];
 
-    // Set v register
-    for i in 0..ckbvm_vl {
-        match (mask[1] >> 12) & 0b111 {
-            0b000 => {
-                let offset = [0u64, 8][rand.u64() as usize % 2];
-                spike.set_vreg(32 + i * 1, (&offset) as *const u64 as *const u8, 1).unwrap();
-                let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 1) };
-                ckbvm.element_mut(2, 8, i as usize).copy_from_slice(buf);
+        // Set v register
+        for i in 0..ckbvm_vl {
+            match (mask[1] >> 12) & 0b111 {
+                0b000 => {
+                    let offset = [0u64, 8][rand.u64() as usize % 2];
+                    spike.set_vreg(32 + i * 1, (&offset) as *const u64 as *const u8, 1).unwrap();
+                    let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 1) };
+                    ckbvm.element_mut(2, 8, i as usize).copy_from_slice(buf);
+                }
+                0b101 => {
+                    let offset = [0u64, 8][rand.u64() as usize % 2];
+                    spike.set_vreg(32 + i * 2, (&offset) as *const u64 as *const u8, 2).unwrap();
+                    let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 2) };
+                    ckbvm.element_mut(2, 16, i as usize).copy_from_slice(buf);
+                }
+                0b110 => {
+                    let offset = [0u64, 8][rand.u64() as usize % 2];
+                    spike.set_vreg(32 + i * 4, (&offset) as *const u64 as *const u8, 4).unwrap();
+                    let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 4) };
+                    ckbvm.element_mut(2, 32, i as usize).copy_from_slice(buf);
+                }
+                0b111 => {
+                    let offset = [0u64, 8][rand.u64() as usize % 2];
+                    spike.set_vreg(32 + i * 8, (&offset) as *const u64 as *const u8, 8).unwrap();
+                    let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 8) };
+                    ckbvm.element_mut(2, 64, i as usize).copy_from_slice(buf);
+                }
+                _ => unreachable!(),
             }
-            0b101 => {
-                let offset = [0u64, 8][rand.u64() as usize % 2];
-                spike.set_vreg(32 + i * 2, (&offset) as *const u64 as *const u8, 2).unwrap();
-                let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 2) };
-                ckbvm.element_mut(2, 16, i as usize).copy_from_slice(buf);
-            }
-            0b110 => {
-                let offset = [0u64, 8][rand.u64() as usize % 2];
-                spike.set_vreg(32 + i * 4, (&offset) as *const u64 as *const u8, 4).unwrap();
-                let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 4) };
-                ckbvm.element_mut(2, 32, i as usize).copy_from_slice(buf);
-            }
-            0b111 => {
-                let offset = [0u64, 8][rand.u64() as usize % 2];
-                spike.set_vreg(32 + i * 8, (&offset) as *const u64 as *const u8, 8).unwrap();
-                let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 8) };
-                ckbvm.element_mut(2, 64, i as usize).copy_from_slice(buf);
-            }
-            _ => unreachable!(),
         }
-    }
 
-    // Execute random instruction
-    let insn = rand.u32() & mask[0] | mask[1];
-    if std::env::var("LOG").is_ok() {
-        println!(
-            "sew={:?} lmul={:?} vl={:?} insn_choose=0x{:x} insn=0x{:x}",
-            ckbvm_sew,
-            ckbvm.vlmul(),
-            ckbvm_vl,
-            insn_choose,
-            insn
-        );
+        // Execute random instruction
+        let insn = rand.u32() & mask[0] | mask[1];
+        if std::env::var("LOG").is_ok() {
+            println!(
+                "sew={:?} lmul={:?} vl={:?} insn_choose=0x{:x} insn=0x{:x}",
+                ckbvm_sew,
+                ckbvm.vlmul(),
+                ckbvm_vl,
+                insn_choose,
+                insn
+            );
+        }
+        let err = spike.execute(insn as u64);
+        let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
+        let r = ckb_vm::instructions::execute_instruction(insn, &mut ckbvm);
+        assert_eq!(err.is_ok(), r.is_ok());
     }
-    let err = spike.execute(insn as u64);
-    let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
-    let r = ckb_vm::instructions::execute_instruction(insn, &mut ckbvm);
-    assert_eq!(err.is_ok(), r.is_ok());
 
     // Check result
     let mut spike_vd = [0x00; 16];
