@@ -10,8 +10,8 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-# ckb-vm = { git = "https://github.com/mohanson/ckb-vm", branch = "rvv_128" }
-ckb-vm = { path = "/home/ubuntu/src/ckb-vm" }
+ckb-vm = { git = "https://github.com/mohanson/ckb-vm", branch = "rvv_128" }
+# ckb-vm = { path = "/home/ubuntu/src/ckb-vm" }
 
 [dependencies.spike-sys]
 path = ".."
@@ -21,19 +21,13 @@ path = ".."
 members = ["."]
 
 [[bin]]
-name = "fuzz_target_1"
-path = "fuzz_targets/fuzz_target_1.rs"
+name = "fuzz_alu"
+path = "fuzz_targets/fuzz_alu.rs"
 test = false
 doc = false
 
 [[bin]]
-name = "fuzz_target_2"
-path = "fuzz_targets/fuzz_target_2.rs"
-test = false
-doc = false
-
-[[bin]]
-name = "fuzz_target_3"
-path = "fuzz_targets/fuzz_target_3.rs"
+name = "fuzz_mem"
+path = "fuzz_targets/fuzz_mem.rs"
 test = false
 doc = false
