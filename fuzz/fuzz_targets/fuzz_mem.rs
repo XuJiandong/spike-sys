@@ -311,25 +311,25 @@ fn fuzz_indexed(data: [u8; 2048]) {
         for i in 0..ckbvm_vl {
             match (mask[1] >> 12) & 0b111 {
                 0b000 => {
-                    let offset = [0u64, 8][rand.u64() as usize % 2];
+                    let offset = [0u64, 8, 16, 24][rand.u64() as usize % 4];
                     spike.set_vreg(32 + i * 1, (&offset) as *const u64 as *const u8, 1).unwrap();
                     let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 1) };
                     ckbvm.element_mut(2, 8, i as usize).copy_from_slice(buf);
                 }
                 0b101 => {
-                    let offset = [0u64, 8][rand.u64() as usize % 2];
+                    let offset = [0u64, 8, 16, 24][rand.u64() as usize % 4];
                     spike.set_vreg(32 + i * 2, (&offset) as *const u64 as *const u8, 2).unwrap();
                     let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 2) };
                     ckbvm.element_mut(2, 16, i as usize).copy_from_slice(buf);
                 }
                 0b110 => {
-                    let offset = [0u64, 8][rand.u64() as usize % 2];
+                    let offset = [0u64, 8, 16, 24][rand.u64() as usize % 4];
                     spike.set_vreg(32 + i * 4, (&offset) as *const u64 as *const u8, 4).unwrap();
                     let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 4) };
                     ckbvm.element_mut(2, 32, i as usize).copy_from_slice(buf);
                 }
                 0b111 => {
-                    let offset = [0u64, 8][rand.u64() as usize % 2];
+                    let offset = [0u64, 8, 16, 24][rand.u64() as usize % 4];
                     spike.set_vreg(32 + i * 8, (&offset) as *const u64 as *const u8, 8).unwrap();
                     let buf = unsafe { std::slice::from_raw_parts((&offset) as *const u64 as *const u8, 8) };
                     ckbvm.element_mut(2, 64, i as usize).copy_from_slice(buf);
