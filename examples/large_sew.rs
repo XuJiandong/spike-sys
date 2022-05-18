@@ -17,7 +17,7 @@ pub fn main() {
 
     assert_eq!(vl, 2);
     assert_eq!(sew, 256);
-    assert_eq!(lmul, 1);
+    assert_eq!(lmul, 1.0);
     assert_eq!(vill, 0);
 
     println!(
