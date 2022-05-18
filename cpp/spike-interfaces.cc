@@ -57,6 +57,7 @@ uint64_t rvv_new_processor(uint32_t vlen, uint32_t elen, uint64_t mem_size) {
     processor_t *proc = new processor_t("RV64GCV", "MSU", buf, mem, 0, false, NULL, std::cerr);
     reg_t val = proc->state.sstatus->read();
     proc->state.sstatus->write(val | SSTATUS_VS);
+    proc->VU.vxrm->write(0x02);
     return (uint64_t)proc;
 }
 
@@ -66,7 +67,7 @@ int32_t rvv_execute(uint64_t processor, uint64_t instruction) {
         insn_func_t func = proc->decode_insn(instruction);
         func(proc, instruction, 0);
     } catch (trap_t &e) {
-        fprintf(stderr, "Exception found, error code: %lu(%s), instruction: 0x%08lX)\n", e.cause(), e.name(), e.get_tval());
+        // fprintf(stderr, "Exception found, error code: %lu(%s), instruction: 0x%08lX)\n", e.cause(), e.name(), e.get_tval());
         // `cause` is starting from zero, see `CAUSE_MISALIGNED_FETCH`
         return (int)e.cause() + 1;
     }
@@ -144,7 +145,7 @@ uint64_t rvv_get_vtype(uint64_t processor) {
     return proc->VU.vtype->read();
 }
 
-uint64_t rvv_get_lmul(uint64_t processor) {
+float rvv_get_lmul(uint64_t processor) {
     processor_t *proc = (processor_t *)processor;
     return proc->VU.vflmul;
 }
@@ -154,7 +155,7 @@ uint64_t rvv_get_vill(uint64_t processor) {
     return proc->VU.vill;
 }
 
-void rvv_delete_processor(uint64_t h) { 
+void rvv_delete_processor(uint64_t h) {
     processor_t* p = (processor_t*)h;
     delete static_cast<memory*>(p->sim);
     delete p;

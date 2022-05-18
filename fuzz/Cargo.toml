@@ -1,0 +1,33 @@
+[package]
+name = "spike-sys-fuzz"
+version = "0.0.0"
+authors = ["Automatically generated"]
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+ckb-vm = { git = "https://github.com/mohanson/ckb-vm", branch = "rvv_128" }
+# ckb-vm = { path = "/home/ubuntu/src/ckb-vm" }
+
+[dependencies.spike-sys]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "fuzz_alu"
+path = "fuzz_targets/fuzz_alu.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_mem"
+path = "fuzz_targets/fuzz_mem.rs"
+test = false
+doc = false

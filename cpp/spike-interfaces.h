@@ -30,7 +30,7 @@ uint64_t rvv_get_elen(uint64_t processor);
 uint64_t rvv_get_vl(uint64_t processor);
 uint64_t rvv_get_sew(uint64_t processor);
 uint64_t rvv_get_vtype(uint64_t processor);
-uint64_t rvv_get_lmul(uint64_t processor);
+float rvv_get_lmul(uint64_t processor);
 uint64_t rvv_get_vill(uint64_t processor);
 
 /**
