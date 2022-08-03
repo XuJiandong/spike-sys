@@ -43,7 +43,7 @@ int rvv_load_mem(uint64_t processor, uint64_t addr, uint64_t len, uint8_t *bytes
 int rvv_store_mem(uint64_t processor, uint64_t addr, uint64_t len, uint8_t *bytes);
 
 uint64_t rvv_new_disassembler(uint32_t xlen);
-int rvv_disassemble(uint64_t dis, uint64_t inst, char *output, uint32_t output_len);
+int rvv_disassemble(uint64_t dis, uint64_t inst, char *output, uint32_t *output_len);
 void rvv_delete_disassembler(uint64_t dis);
 
 void rvv_delete_processor(uint64_t);
