@@ -18,15 +18,15 @@ pub fn main() {
     output.resize(128, 0);
 
     let inst: u64 = 0xc18472d7;
-    let result =
-        unsafe { rvv_disassemble(dis, inst, (&mut output).as_mut_ptr(), output.len() as u32) };
+    let mut output_len = output.len() as u32;
+    let result = unsafe { rvv_disassemble(dis, inst, (&mut output).as_mut_ptr(), &mut output_len) };
     assert_eq!(result, 0);
     let inst_str = to_string(&output);
     assert_eq!(inst_str, "vsetivli t0, 8, e64, m1, tu, mu");
 
     let inst: u64 = 0x02a2c157;
-    let result =
-        unsafe { rvv_disassemble(dis, inst, (&mut output).as_mut_ptr(), output.len() as u32) };
+    let mut output_len = output.len() as u32;
+    let result = unsafe { rvv_disassemble(dis, inst, (&mut output).as_mut_ptr(), &mut output_len) };
     assert_eq!(result, 0);
     let inst_str = to_string(&output);
     assert_eq!(inst_str, "vadd.vx v2, v10, t0");

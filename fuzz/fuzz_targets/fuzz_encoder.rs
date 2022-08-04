@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use std::str;
 
 #[rustfmt::skip]
-const COMPLETED_RVV_INST_VEC: [&str; 267] = [
+const COMPLETED_RVV_INST_VEC: [&str; 269] = [
     //"vsetivli",
     //"vsetvli",
     "vsetvl",
@@ -268,11 +268,11 @@ const COMPLETED_RVV_INST_VEC: [&str; 267] = [
     "vwredsum.vs",
     "vmand.mm",
     "vmnand.mm",
-    //"vmandnot.mm",
+    "vmandn.mm",
     "vmxor.mm",
     "vmor.mm",
     "vmnor.mm",
-    //"vmornot.mm",
+    "vmorn.mm",
     "vmxnor.mm",
     "vcpop.m",
     "vmsbf.m",
