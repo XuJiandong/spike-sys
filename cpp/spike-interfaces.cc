@@ -194,13 +194,14 @@ uint64_t rvv_new_disassembler(uint32_t xlen) {
     return (uint64_t)dis;
 }
 
-int rvv_disassemble(uint64_t dis, uint64_t inst, char *output, uint32_t output_len) {
+int rvv_disassemble(uint64_t dis, uint64_t inst, char *output, uint32_t *output_len) {
     disassembler_t *disassembler = (disassembler_t *)dis;
     std::string str = disassembler->disassemble((insn_t)inst);
-    if (str.length() > (output_len - 1)) {
+    if (str.length() > (*output_len - 1)) {
         return -4;
     }
     strncpy(output, str.c_str(), str.length() + 1);
+    *output_len = str.length();
     return 0;
 }
 
