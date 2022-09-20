@@ -1,4 +1,5 @@
 #![no_main]
+use ckb_vm::instructions::execute::{generate_handle_function_list, generate_vcheck_function_list};
 use ckb_vm::CoreMachine;
 use libfuzzer_sys::fuzz_target;
 use spike_sys::*;
@@ -66,6 +67,8 @@ fuzz_target!(|data: [u8; 512]| {
             u64::MAX,
         ))
         .build();
+    let vcheck_function_list = generate_vcheck_function_list();
+    let handle_function_list = generate_handle_function_list();
 
     // Set vtype
     match rand.u8() % 3 {
@@ -87,7 +90,8 @@ fuzz_target!(|data: [u8; 512]| {
             insn |= insn_lmul << 20;
             spike.execute(insn as u64).unwrap();
             let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
-            ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
+            ckb_vm::instructions::execute_instruction(&mut ckbvm, &vcheck_function_list, &handle_function_list, insn)
+                .unwrap();
         }
         // vsetvli
         1 => {
@@ -108,7 +112,8 @@ fuzz_target!(|data: [u8; 512]| {
             insn |= insn_lmul << 20;
             spike.execute(insn as u64).unwrap();
             let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
-            ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
+            ckb_vm::instructions::execute_instruction(&mut ckbvm, &vcheck_function_list, &handle_function_list, insn)
+                .unwrap();
         }
         // vsetvl
         2 => {
@@ -129,24 +134,25 @@ fuzz_target!(|data: [u8; 512]| {
             ckbvm.set_register(3, (insn_sew << 3 | insn_lmul) as u64);
             spike.execute(insn as u64).unwrap();
             let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
-            ckb_vm::instructions::execute_instruction(insn, &mut ckbvm).unwrap();
+            ckb_vm::instructions::execute_instruction(&mut ckbvm, &vcheck_function_list, &handle_function_list, insn)
+                .unwrap();
         }
         _ => unreachable!(),
     }
     assert_eq!(spike.get_vill(), 0);
-    assert_eq!(ckbvm.vill(), false);
+    assert_eq!(ckbvm.coprocessor_v().vill(), false);
     let spike_sew = spike.get_sew();
-    let ckbvm_sew = ckbvm.vsew();
+    let ckbvm_sew = ckbvm.coprocessor_v().vsew();
     assert_eq!(spike_sew, ckbvm_sew);
     let spike_vl = spike.get_vl();
-    let ckbvm_vl = ckbvm.vl();
+    let ckbvm_vl = ckbvm.coprocessor_v().vl();
     assert_eq!(spike_vl, ckbvm_vl);
 
     // Set v register
     for i in 0..32 {
         let buf = rand.data(16);
         spike.set_vreg(16 * i, buf.as_ptr() as *const u8, 16).unwrap();
-        ckbvm.element_mut(i as usize, 128, 0).copy_from_slice(buf);
+        ckbvm.coprocessor_v_mut().element_mut(i as usize, 128, 0).copy_from_slice(buf);
     }
     // Set x register
     for i in 1..32 {
@@ -385,7 +391,7 @@ fuzz_target!(|data: [u8; 512]| {
             println!(
                 "sew={:?} lmul={:?} vl={:?} insn_choose=0x{:x} insn=0x{:x}",
                 ckbvm_sew,
-                ckbvm.vlmul(),
+                ckbvm.coprocessor_v().vlmul(),
                 ckbvm_vl,
                 insn_choose,
                 insn
@@ -393,7 +399,8 @@ fuzz_target!(|data: [u8; 512]| {
         }
         let err = spike.execute(insn as u64);
         let insn = ckb_vm::instructions::v::factory::<u64>(insn, ckb_vm::machine::VERSION1).unwrap();
-        let r = ckb_vm::instructions::execute_instruction(insn, &mut ckbvm);
+        let r =
+            ckb_vm::instructions::execute_instruction(&mut ckbvm, &vcheck_function_list, &handle_function_list, insn);
         assert_eq!(err.is_ok(), r.is_ok());
     }
 
@@ -402,7 +409,7 @@ fuzz_target!(|data: [u8; 512]| {
     let mut ckbvm_vd = [0x00; 16];
     for i in 0..32 {
         spike.get_vreg(16 * i, (&mut spike_vd).as_mut_ptr() as *mut u8, 16).unwrap();
-        ckbvm_vd.copy_from_slice(ckbvm.element_ref(i as usize, 128, 0));
+        ckbvm_vd.copy_from_slice(ckbvm.coprocessor_v_mut().element_ref(i as usize, 128, 0));
         assert_eq!(spike_vd, ckbvm_vd);
     }
     for i in 0..32 {
